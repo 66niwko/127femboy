@@ -739,53 +739,47 @@ footer{position:relative;z-index:2;border-top:1px solid var(--border-soft);paddi
 <script>
 /* ════════════════════════════════════════════════════════
    00127 — PROFİL / ARKADAŞ / MESAJ SİSTEMİ
-   Veriler: Mochi Backend API (server.js + SQLite)
+   Veriler: window.storage shared API (kalıcı, tüm kullanıcılar)
 ════════════════════════════════════════════════════════ */
 
 // ── Yerel durum ──
-let ME = null;        // {id, username, avatar, color, bio, tag}
-let TOKEN = null;     // JWT
+let ME = null; // {uid, username, avatar, color, bio, tag}
 let selectedAvatar = '🐱';
 let selectedColor = '#a8a8ff';
 let activeChatUid = null;
-let activeChatUser = null;
 let pollInterval = null;
 
-// ── API yardımcıları ──
-const API = '';  // aynı origin — gerekirse 'http://localhost:3000' yaz
+// ── Storage yardımcıları (localStorage tabanlı) ──
+// shared=true  → 'mochi_shared_' prefix  (tüm "kullanıcılar" — aynı tarayıcıda)
+// shared=false → 'mochi_me_'     prefix  (sadece bu tarayıcı / bu oturum)
+const S_SHARED = 'mochi_shared_';
+const S_MINE   = 'mochi_me_';
 
-async function apiFetch(path, opts={}){
-  const headers = { 'Content-Type':'application/json', ...(opts.headers||{}) };
-  if(TOKEN) headers['Authorization'] = 'Bearer '+TOKEN;
-  const res = await fetch(API+path, { ...opts, headers });
-  const data = await res.json().catch(()=>({}));
-  if(!res.ok) throw new Error(data.error || res.statusText);
-  return data;
+async function storageGet(key, shared=true){
+  try{
+    const raw = localStorage.getItem((shared ? S_SHARED : S_MINE) + key);
+    return raw ? JSON.parse(raw) : null;
+  } catch(e){ return null; }
 }
-
-// ── Token kalıcı saklama (sadece kendi tarayıcısı) ──
-function saveToken(t){ TOKEN=t; try{ localStorage.setItem('mochi_token',t); }catch(e){} }
-function loadToken(){ try{ return localStorage.getItem('mochi_token'); }catch(e){ return null; } }
-function clearToken(){ TOKEN=null; try{ localStorage.removeItem('mochi_token'); }catch(e){} }
-
-// ── Dummy — eski kod uyumu için bırakıldı ──
-// (artık kullanılmıyor)
-const S_SHARED = ''; const S_MINE = '';
-async function storageGet(){ return null; }
-async function storageSet(){ return true; }
-async function storageDel(){ }
+async function storageSet(key, val, shared=true){
+  try{
+    localStorage.setItem((shared ? S_SHARED : S_MINE) + key, JSON.stringify(val));
+    return true;
+  } catch(e){ return false; }
+}
+async function storageDel(key, shared=true){
+  try{ localStorage.removeItem((shared ? S_SHARED : S_MINE) + key); } catch(e){}
+}
 
 // ── Yükleme ──
 async function loadMyProfile(){
-  TOKEN = loadToken();
-  if(!TOKEN){ showSetupOverlay(); return; }
-  try {
-    const data = await apiFetch('/api/auth/me');
-    ME = data.user;
+  // Kendi profilimiz personal (shared=false) kaydediliyor
+  const saved = await storageGet('myprofile', false);
+  if(saved && saved.uid){
+    ME = saved;
     applyProfile();
     startPolling();
-  } catch(e) {
-    clearToken();
+  } else {
     showSetupOverlay();
   }
 }
@@ -804,70 +798,28 @@ async function createProfile(){
   if(username.length > 18){ err.textContent='En fazla 18 karakter.'; err.style.display='block'; return; }
   err.style.display='none';
 
-  // Önce var olan hesaba giriş dene, yoksa kayıt ol
-  try {
-    // Önce kayıt dene
-    let data;
-    try {
-      data = await apiFetch('/api/auth/register', {
-        method:'POST',
-        body: JSON.stringify({ username, avatar: selectedAvatar, color: selectedColor })
-      });
-    } catch(e) {
-      if(e.message === 'Bu kullanıcı adı alınmış'){
-        // Kullanıcı adı alınmışsa giriş dene
-        err.textContent = 'Bu kullanıcı adı alınmış. Farklı bir isim dene.';
-        err.style.display='block';
-        return;
-      }
-      throw e;
-    }
-    saveToken(data.token);
-    ME = data.user;
+  // Kullanıcı adı benzersiz mi kontrol et
+  const existing = await storageGet('user:'+username.toLowerCase(), true);
+  if(existing){ err.textContent='Bu kullanıcı adı alınmış.'; err.style.display='block'; return; }
 
-    const o = document.getElementById('setup-overlay');
-    o.classList.remove('active');
-    setTimeout(()=>o.style.display='none',300);
-    applyProfile();
-    startPolling();
-    showToast('Profil oluşturuldu! Hoş geldin, '+username+' 👋','win');
-  } catch(e) {
-    err.textContent = e.message || 'Bir hata oluştu, tekrar dene.';
-    err.style.display='block';
-  }
+  const uid = 'u_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
+  const tag = '#'+Math.floor(Math.random()*90000+10000);
+  ME = { uid, username, avatar: selectedAvatar, color: selectedColor, bio:'', tag };
+
+  // Profili hem kişisel hem de ortak dizine kaydet
+  await storageSet('myprofile', ME, false);
+  await storageSet('user:'+username.toLowerCase(), {uid, username, avatar:selectedAvatar, color:selectedColor, bio:'', tag}, true);
+
+  const o = document.getElementById('setup-overlay');
+  o.classList.remove('active');
+  setTimeout(()=>o.style.display='none',300);
+  applyProfile();
+  startPolling();
+  showToast('Profil oluşturuldu! Hoş geldin, '+username+' 👋','win');
 }
-
-// Giriş yap paneli (mevcut kullanıcılar için)
-async function loginProfile(){
-  const input = document.getElementById('setup-username');
-  const err = document.getElementById('setup-error');
-  const username = input.value.trim();
-  if(!username){ err.textContent='Kullanıcı adı gir.'; err.style.display='block'; return; }
-  err.style.display='none';
-  try {
-    const data = await apiFetch('/api/auth/login', { method:'POST', body: JSON.stringify({ username }) });
-    saveToken(data.token);
-    ME = data.user;
-    const o = document.getElementById('setup-overlay');
-    o.classList.remove('active');
-    setTimeout(()=>o.style.display='none',300);
-    applyProfile();
-    startPolling();
-    showToast('Hoş geldin, '+ME.username+' 👋','win');
-  } catch(e) {
-    err.textContent = e.message || 'Giriş başarısız.';
-    err.style.display='block';
-  }
-}
-
-// dummy — eski çağrılarla uyum
-async function _dummy(){}
-
 
 function applyProfile(){
   if(!ME) return;
-  // API yanıtında 'id' alanı geliyor (uid değil)
-  if(!ME.uid && ME.id) ME.uid = ME.id;
   document.getElementById('nav-avatar-sm').textContent = ME.avatar;
   document.getElementById('nav-username-label').textContent = ME.username;
   document.getElementById('sidebar-avatar').textContent = ME.avatar;
@@ -923,27 +875,18 @@ function syncSettingsPickers(){
 
 async function saveSettings(){
   ME.bio = document.getElementById('settings-bio').value.slice(0,120);
+  await storageSet('myprofile', ME, false);
+  await storageSet('user:'+ME.username.toLowerCase(), {uid:ME.uid, username:ME.username, avatar:ME.avatar, color:ME.color, bio:ME.bio, tag:ME.tag}, true);
+  applyProfile();
   const msg = document.getElementById('settings-msg');
-  try {
-    const data = await apiFetch('/api/users/me', {
-      method:'PATCH',
-      body: JSON.stringify({ avatar: ME.avatar, color: ME.color, bio: ME.bio })
-    });
-    ME = { ...data.user, uid: data.user.id };
-    applyProfile();
-    msg.className='sys-success'; msg.textContent='Kaydedildi ✓'; msg.style.display='block';
-    setTimeout(()=>msg.style.display='none',2500);
-  } catch(e) {
-    msg.className='sys-error'; msg.textContent=e.message; msg.style.display='block';
-  }
+  msg.className='sys-success'; msg.textContent='Kaydedildi ✓'; msg.style.display='block';
+  setTimeout(()=>msg.style.display='none',2500);
 }
 
 async function deleteProfile(){
   if(!confirm('Profilini silmek istediğine emin misin? Bu işlem geri alınamaz.')) return;
-  try {
-    await apiFetch('/api/users/me', { method:'DELETE' });
-  } catch(e) { /* yine de sil */ }
-  clearToken();
+  await storageDel('myprofile', false);
+  await storageDel('user:'+ME.username.toLowerCase(), true);
   stopPolling();
   ME = null;
   closeProfilePanel();
@@ -955,51 +898,44 @@ async function deleteProfile(){
 // ── Arkadaş arama ──
 let searchDebounce;
 async function searchUser(){
-  const q = document.getElementById('friend-search-input').value.trim();
+  const q = document.getElementById('friend-search-input').value.trim().toLowerCase();
   const res = document.getElementById('friend-search-results');
   clearTimeout(searchDebounce);
   if(q.length < 2){ res.innerHTML=''; return; }
   searchDebounce = setTimeout(async()=>{
-    try {
-      const data = await apiFetch('/api/users/search?q='+encodeURIComponent(q));
-      const user = data.user;
-      if(!user){ res.innerHTML='<div class="sys-error">Kullanıcı bulunamadı.</div>'; return; }
-      if(user.id === ME.uid){ res.innerHTML='<div class="sys-error">Kendinle arkadaş olamazsın :)</div>'; return; }
-      // Zaten arkadaş mı?
-      const friendsData = await apiFetch('/api/friends');
-      const alreadyFriend = friendsData.friends.some(f=>f.id===user.id);
-      // İstek gönderilmiş mi? (backend bunu 409 ile yanıtlıyor, burada basitçe UI'da saklayalım)
-      const sentKey = 'mochi_sent_'+ME.uid+'_'+user.id;
-      const alreadySent = localStorage.getItem(sentKey);
-      res.innerHTML = `
-        <div class="search-result-item">
-          <div class="friend-av" style="background:${user.color}22;border:1px solid ${user.color}33;">${user.avatar}</div>
-          <div class="friend-info">
-            <div class="friend-name">${escHtml(user.username)}</div>
-            <div class="friend-status">${escHtml(user.bio||'Mochi Kullanıcısı')}</div>
-          </div>
-          ${alreadyFriend
-            ? '<span class="frd-btn" style="cursor:default;opacity:.5;">Arkadaş ✓</span>'
-            : alreadySent
-              ? '<span class="frd-btn" style="cursor:default;opacity:.5;">İstek Gönderildi</span>'
-              : `<button class="frd-btn accept" onclick="sendFriendReq('${user.id}','${escHtml(user.username)}')">İstek Gönder</button>`
-          }
-        </div>`;
-    } catch(e) {
-      res.innerHTML='<div class="sys-error">'+escHtml(e.message)+'</div>';
-    }
+    const user = await storageGet('user:'+q, true);
+    if(!user){ res.innerHTML='<div class="sys-error">Kullanıcı bulunamadı.</div>'; return; }
+    if(user.uid === ME.uid){ res.innerHTML='<div class="sys-error">Kendinle arkadaş olamazsın :)</div>'; return; }
+    // Zaten arkadaş mı?
+    const myFriends = await storageGet('friends:'+ME.uid, true) || [];
+    const alreadyFriend = myFriends.some(f=>f.uid===user.uid);
+    // İstek gönderilmiş mi?
+    const requests = await storageGet('requests:'+user.uid, true) || [];
+    const alreadySent = requests.some(r=>r.fromUid===ME.uid);
+    res.innerHTML = `
+      <div class="search-result-item">
+        <div class="friend-av" style="background:${user.color}22;border:1px solid ${user.color}33;">${user.avatar}</div>
+        <div class="friend-info">
+          <div class="friend-name">${escHtml(user.username)}</div>
+          <div class="friend-status">${escHtml(user.bio||'Mochi Kullanıcısı')}</div>
+        </div>
+        ${alreadyFriend
+          ? '<span class="frd-btn" style="cursor:default;opacity:.5;">Arkadaş ✓</span>'
+          : alreadySent
+            ? '<span class="frd-btn" style="cursor:default;opacity:.5;">İstek Gönderildi</span>'
+            : `<button class="frd-btn accept" onclick="sendFriendReq('${user.uid}','${escHtml(user.username)}')">İstek Gönder</button>`
+        }
+      </div>`;
   }, 350);
 }
 
-async function sendFriendReq(toId, toUsername){
-  try {
-    await apiFetch('/api/friends/request/'+toId, { method:'POST' });
-    localStorage.setItem('mochi_sent_'+ME.uid+'_'+toId, '1');
-    document.getElementById('friend-search-results').innerHTML='<div class="sys-success">Arkadaşlık isteği gönderildi ✓</div>';
-    document.getElementById('friend-search-input').value='';
-  } catch(e) {
-    document.getElementById('friend-search-results').innerHTML='<div class="sys-error">'+escHtml(e.message)+'</div>';
-  }
+async function sendFriendReq(toUid, toUsername){
+  const requests = await storageGet('requests:'+toUid, true) || [];
+  if(requests.some(r=>r.fromUid===ME.uid)) return;
+  requests.push({ fromUid:ME.uid, fromUsername:ME.username, fromAvatar:ME.avatar, fromColor:ME.color, fromTag:ME.tag, ts:Date.now() });
+  await storageSet('requests:'+toUid, requests, true);
+  document.getElementById('friend-search-results').innerHTML='<div class="sys-success">Arkadaşlık isteği gönderildi ✓</div>';
+  document.getElementById('friend-search-input').value='';
 }
 
 // ── Arkadaş listesi ──
@@ -1008,80 +944,81 @@ async function refreshFriendsList(){
   const frdDiv = document.getElementById('friends-list');
   if(!ME) return;
 
-  try {
-    // Gelen istekler
-    const reqData = await apiFetch('/api/friends/requests');
-    const requests = reqData.requests || [];
-    const pendingBadge = document.getElementById('req-badge');
-    if(requests.length>0){ pendingBadge.textContent=requests.length; pendingBadge.style.display=''; }
-    else { pendingBadge.style.display='none'; }
+  // Gelen istekler
+  const requests = await storageGet('requests:'+ME.uid, true) || [];
+  const pendingBadge = document.getElementById('req-badge');
+  if(requests.length>0){ pendingBadge.textContent=requests.length; pendingBadge.style.display=''; }
+  else { pendingBadge.style.display='none'; }
 
-    if(requests.length===0){
-      reqDiv.innerHTML='<div class="empty-state" style="padding:20px 0;"><div class="empty-icon">📨</div>Bekleyen istek yok.</div>';
-    } else {
-      reqDiv.innerHTML = requests.map(r=>`
-        <div class="friend-item" id="req-${r.from_id}">
-          <div class="friend-av" style="background:${r.color}22;border:1px solid ${r.color}33;">${r.avatar}</div>
-          <div class="friend-info">
-            <div class="friend-name">${escHtml(r.username)}</div>
-            <div class="friend-status">${r.tag}</div>
-          </div>
-          <div class="friend-actions">
-            <button class="frd-btn accept" onclick="acceptReq('${r.from_id}')">Kabul Et</button>
-            <button class="frd-btn del" onclick="rejectReq('${r.from_id}')">Reddet</button>
-          </div>
-        </div>`).join('');
-    }
+  if(requests.length===0){
+    reqDiv.innerHTML='<div class="empty-state" style="padding:20px 0;"><div class="empty-icon">📨</div>Bekleyen istek yok.</div>';
+  } else {
+    reqDiv.innerHTML = requests.map(r=>`
+      <div class="friend-item" id="req-${r.fromUid}">
+        <div class="friend-av" style="background:${r.fromColor}22;border:1px solid ${r.fromColor}33;">${r.fromAvatar}</div>
+        <div class="friend-info">
+          <div class="friend-name">${escHtml(r.fromUsername)}</div>
+          <div class="friend-status">${r.fromTag}</div>
+        </div>
+        <div class="friend-actions">
+          <button class="frd-btn accept" onclick="acceptReq('${r.fromUid}','${escHtml(r.fromUsername)}','${r.fromAvatar}','${r.fromColor}','${r.fromTag}')">Kabul Et</button>
+          <button class="frd-btn del" onclick="rejectReq('${r.fromUid}')">Reddet</button>
+        </div>
+      </div>`).join('');
+  }
 
-    // Arkadaş listesi
-    const frdData = await apiFetch('/api/friends');
-    const friends = frdData.friends || [];
-    if(friends.length===0){
-      frdDiv.innerHTML='<div class="empty-state" style="padding:20px 0;"><div class="empty-icon">👥</div>Henüz arkadaşın yok.</div>';
-    } else {
-      frdDiv.innerHTML = friends.map(f=>`
-        <div class="friend-item">
-          <div class="friend-av" style="background:${f.color}22;border:1px solid ${f.color}33;">${f.avatar}</div>
-          <div class="friend-info">
-            <div class="friend-name">${escHtml(f.username)}</div>
-            <div class="friend-status">${f.tag}</div>
-          </div>
-          <div class="friend-actions">
-            <button class="frd-btn msg" onclick="openChat('${f.id}','${escHtml(f.username)}','${f.avatar}','${f.color}')">Mesaj</button>
-            <button class="frd-btn del" onclick="removeFriend('${f.id}','${escHtml(f.username)}')">Sil</button>
-          </div>
-        </div>`).join('');
-    }
-  } catch(e) {
-    reqDiv.innerHTML='<div class="sys-error">'+escHtml(e.message)+'</div>';
+  // Arkadaş listesi
+  const friends = await storageGet('friends:'+ME.uid, true) || [];
+  if(friends.length===0){
+    frdDiv.innerHTML='<div class="empty-state" style="padding:20px 0;"><div class="empty-icon">👥</div>Henüz arkadaşın yok.</div>';
+  } else {
+    frdDiv.innerHTML = friends.map(f=>`
+      <div class="friend-item">
+        <div class="friend-av" style="background:${f.color}22;border:1px solid ${f.color}33;">${f.avatar}</div>
+        <div class="friend-info">
+          <div class="friend-name">${escHtml(f.username)}</div>
+          <div class="friend-status">${f.tag}</div>
+        </div>
+        <div class="friend-actions">
+          <button class="frd-btn msg" onclick="openChat('${f.uid}','${escHtml(f.username)}','${f.avatar}','${f.color}')">Mesaj</button>
+          <button class="frd-btn del" onclick="removeFriend('${f.uid}','${escHtml(f.username)}')">Sil</button>
+        </div>
+      </div>`).join('');
   }
 }
 
-async function acceptReq(fromId){
-  try {
-    await apiFetch('/api/friends/accept/'+fromId, { method:'POST' });
-    refreshFriendsList();
-    showToast('Arkadaşlık kabul edildi 🎉','win');
-  } catch(e) {
-    showToast(e.message,'lose');
+async function acceptReq(fromUid, fromUsername, fromAvatar, fromColor, fromTag){
+  // Karşılıklı arkadaş ekle
+  const myFriends = await storageGet('friends:'+ME.uid, true) || [];
+  if(!myFriends.some(f=>f.uid===fromUid)){
+    myFriends.push({uid:fromUid, username:fromUsername, avatar:fromAvatar, color:fromColor, tag:fromTag});
+    await storageSet('friends:'+ME.uid, myFriends, true);
   }
+  const theirFriends = await storageGet('friends:'+fromUid, true) || [];
+  if(!theirFriends.some(f=>f.uid===ME.uid)){
+    theirFriends.push({uid:ME.uid, username:ME.username, avatar:ME.avatar, color:ME.color, tag:ME.tag});
+    await storageSet('friends:'+fromUid, theirFriends, true);
+  }
+  // İsteği kaldır
+  const requests = await storageGet('requests:'+ME.uid, true) || [];
+  await storageSet('requests:'+ME.uid, requests.filter(r=>r.fromUid!==fromUid), true);
+  refreshFriendsList();
+  showToast('Arkadaşlık kabul edildi 🎉','win');
 }
 
-async function rejectReq(fromId){
-  try {
-    await apiFetch('/api/friends/reject/'+fromId, { method:'POST' });
-    refreshFriendsList();
-  } catch(e) {}
+async function rejectReq(fromUid){
+  const requests = await storageGet('requests:'+ME.uid, true) || [];
+  await storageSet('requests:'+ME.uid, requests.filter(r=>r.fromUid!==fromUid), true);
+  refreshFriendsList();
 }
 
-async function removeFriend(friendId, username){
+async function removeFriend(uid, username){
   if(!confirm(username+' arkadaşlıktan çıkarılsın mı?')) return;
-  try {
-    await apiFetch('/api/friends/'+friendId, { method:'DELETE' });
-    refreshFriendsList();
-  } catch(e) {
-    showToast(e.message,'lose');
-  }
+  const myFriends = await storageGet('friends:'+ME.uid, true) || [];
+  await storageSet('friends:'+ME.uid, myFriends.filter(f=>f.uid!==uid), true);
+  const theirFriends = await storageGet('friends:'+uid, true) || [];
+  await storageSet('friends:'+uid, theirFriends.filter(f=>f.uid!==ME.uid), true);
+  refreshFriendsList();
 }
 
 // ── Mesajlaşma ──
