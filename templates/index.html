@@ -16,6 +16,8 @@
   --accent:#a8a8ff;--accent-dim:rgba(168,168,255,0.1);
   --btn-bg:#161626;--btn-border:#333355;--btn-text:#c0c0ff;
   --sms-green:#00d97a;--green-dim:rgba(0,217,122,0.09);
+  --gold:#f5c842;--gold-dim:rgba(245,200,66,0.10);--gold-border:rgba(245,200,66,0.22);
+  --red:#ff4f4f;--red-dim:rgba(255,79,79,0.10);
 }
 body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;overflow-x:hidden;display:flex;flex-direction:column;}
 body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:52px 52px;pointer-events:none;z-index:0;}
@@ -69,11 +71,13 @@ nav{position:sticky;top:0;display:flex;justify-content:space-between;align-items
 .card-desc{font-size:.8rem;color:var(--muted);font-family:'Inter',sans-serif;line-height:1.7;}
 .card-tag{display:inline-block;margin-top:14px;font-family:'Space Mono';font-size:.58rem;background:var(--green-dim);color:var(--sms-green);border:1px solid rgba(0,217,122,0.18);padding:3px 8px;border-radius:4px;letter-spacing:.05em;}
 .card-tag.soon{background:rgba(168,168,255,0.06);color:var(--accent);border-color:rgba(168,168,255,0.14);}
+.card-tag.gold{background:var(--gold-dim);color:var(--gold);border-color:var(--gold-border);}
 .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border-soft);border-radius:12px;overflow:hidden;border:1px solid var(--border-soft);margin-top:1px;}
 .stat{background:var(--card);padding:22px 26px;}
 .stat-num{font-size:1.75rem;font-weight:800;letter-spacing:-.03em;}
 .stat-label{font-family:'Space Mono';font-size:.62rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-top:4px;}
 
+/* ── SMS MODAL ── */
 #sms-tool-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(16px);z-index:1000;align-items:center;justify-content:center;opacity:0;transition:opacity .3s ease;}
 #sms-tool-overlay.active{display:flex;opacity:1;}
 .sms-container{background:var(--card);border-radius:20px;border:1px solid var(--border);padding:42px 38px 34px;width:100%;max-width:450px;font-family:'Syne',sans-serif;position:relative;box-shadow:0 32px 80px rgba(0,0,0,.9),0 0 0 1px rgba(168,168,255,0.04);transform:scale(.92) translateY(16px);transition:transform .4s cubic-bezier(.22,.68,0,1.15);}
@@ -106,11 +110,113 @@ footer{position:relative;z-index:2;border-top:1px solid var(--border-soft);paddi
 .footer-right a{color:var(--muted2);text-decoration:none;transition:color .2s;}
 .footer-right a:hover{color:var(--muted);}
 
+/* ═══════════════════════════════════════════
+   CASINO SECTION
+═══════════════════════════════════════════ */
+.casino-section{position:relative;z-index:2;max-width:1100px;margin:0 auto;padding:0 2.5rem 100px;}
+
+/* Bakiye bar */
+.casino-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px;}
+.casino-header .section-label{margin-bottom:0;}
+.balance-bar{display:flex;align-items:center;gap:14px;}
+.balance-chip{display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid var(--gold-border);border-radius:12px;padding:10px 18px;}
+.balance-chip .bal-icon{font-size:1.1rem;}
+.balance-chip .bal-label{font-family:'Space Mono';font-size:.58rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;}
+.balance-chip .bal-amount{font-size:1.15rem;font-weight:800;color:var(--gold);letter-spacing:-.02em;font-family:'Space Mono';}
+.btn-reset{font-family:'Space Mono';font-size:.6rem;padding:8px 14px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;transition:border-color .2s,color .2s;}
+.btn-reset:hover{border-color:var(--muted);color:var(--text);}
+
+/* Oyun grid */
+.casino-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+
+.game-card{background:var(--card);border:1px solid var(--border-soft);border-radius:18px;padding:28px 22px;position:relative;overflow:hidden;transition:border-color .25s,background .25s;}
+.game-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(245,200,66,0.2),transparent);opacity:0;transition:opacity .3s;}
+.game-card:hover{background:var(--card2);border-color:rgba(245,200,66,0.18);}
+.game-card:hover::before{opacity:1;}
+.game-card-header{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
+.game-icon{width:42px;height:42px;background:var(--gold-dim);border:1px solid var(--gold-border);border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;}
+.game-name{font-size:1rem;font-weight:800;letter-spacing:-.015em;}
+.game-sub{font-family:'Space Mono';font-size:.58rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-top:2px;}
+
+/* Bet kontrol */
+.bet-row{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+.bet-label{font-family:'Space Mono';font-size:.6rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;min-width:32px;}
+.bet-input{flex:1;background:rgba(245,200,66,0.05);border:1px solid rgba(245,200,66,0.14);color:var(--gold);padding:9px 12px;border-radius:9px;font-family:'Space Mono';font-size:.85rem;font-weight:700;text-align:center;width:100%;}
+.bet-input:focus{outline:none;border-color:rgba(245,200,66,0.38);background:rgba(245,200,66,0.09);}
+.bet-preset{display:flex;gap:5px;}
+.bet-preset button{font-family:'Space Mono';font-size:.6rem;padding:6px 9px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:6px;cursor:pointer;transition:all .15s;}
+.bet-preset button:hover{border-color:var(--gold-border);color:var(--gold);background:var(--gold-dim);}
+
+/* Game display areas */
+.game-display{background:rgba(0,0,0,.25);border:1px solid var(--border-soft);border-radius:12px;padding:18px;margin-bottom:14px;min-height:90px;display:flex;align-items:center;justify-content:center;font-family:'Space Mono';text-align:center;}
+.game-result{font-size:.8rem;color:var(--muted);line-height:1.7;}
+.result-win{color:var(--gold)!important;font-weight:700;}
+.result-lose{color:var(--red)!important;font-weight:700;}
+.result-push{color:var(--accent)!important;font-weight:700;}
+
+/* Yazı Tura coin */
+.coin-wrap{position:relative;width:72px;height:72px;perspective:300px;}
+.coin{width:72px;height:72px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#ffe87a,#c8960c);border:3px solid #f5c842;box-shadow:0 0 18px rgba(245,200,66,0.3),inset 0 2px 4px rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:1.8rem;font-weight:800;font-family:'Space Mono';color:#7a5900;transition:transform .06s;}
+.coin.flipping{animation:coinFlip .8s ease-in-out;}
+@keyframes coinFlip{
+  0%{transform:rotateY(0) scale(1);}
+  25%{transform:rotateY(900deg) scale(1.1);}
+  75%{transform:rotateY(1710deg) scale(1.05);}
+  100%{transform:rotateY(1800deg) scale(1);}
+}
+
+/* Slots */
+.slot-machine{display:flex;gap:8px;align-items:center;}
+.slot-reel{width:54px;height:66px;background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:2rem;position:relative;}
+.slot-reel.spinning .reel-inner{animation:reelSpin .6s cubic-bezier(.22,.68,0,1.15) both;}
+@keyframes reelSpin{0%{transform:translateY(-200%);}80%{transform:translateY(10%);}100%{transform:translateY(0);}}
+.slot-lever{font-size:1.6rem;cursor:pointer;user-select:none;transition:transform .15s;}
+.slot-lever:active{transform:scale(.85);}
+
+/* Blackjack cards */
+.bj-area{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;min-height:52px;}
+.bj-card{width:38px;height:54px;background:var(--bg);border:1px solid var(--border);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;font-family:'Space Mono';position:relative;box-shadow:0 2px 8px rgba(0,0,0,.4);}
+.bj-card.red{color:#ff6b6b;}
+.bj-card.black{color:var(--text);}
+.bj-card.hidden{background:repeating-linear-gradient(45deg,#1a1a2e,#1a1a2e 4px,#222238 4px,#222238 8px);color:transparent;}
+.bj-score{font-family:'Space Mono';font-size:.72rem;color:var(--muted);margin-top:4px;text-align:center;}
+
+/* Play button */
+.btn-play{width:100%;padding:13px;border-radius:10px;font-weight:700;font-size:.85rem;cursor:pointer;font-family:'Syne',sans-serif;letter-spacing:.02em;background:linear-gradient(135deg,rgba(245,200,66,0.15),rgba(245,200,66,0.06));border:1px solid var(--gold-border);color:var(--gold);transition:all .2s;}
+.btn-play:hover:not(:disabled){transform:translateY(-2px);background:linear-gradient(135deg,rgba(245,200,66,0.25),rgba(245,200,66,0.12));box-shadow:0 6px 20px rgba(245,200,66,0.13);}
+.btn-play:disabled{opacity:.4;cursor:not-allowed;}
+.btn-play-sm{width:48%;padding:11px;border-radius:10px;font-weight:700;font-size:.8rem;cursor:pointer;font-family:'Syne',sans-serif;background:transparent;border:1px solid var(--border);color:var(--muted);transition:all .2s;}
+.btn-play-sm.hit{border-color:rgba(0,217,122,0.3);color:var(--sms-green);}
+.btn-play-sm.hit:hover{background:rgba(0,217,122,0.08);}
+.btn-play-sm.stand{border-color:rgba(255,79,79,0.3);color:var(--red);}
+.btn-play-sm.stand:hover{background:rgba(255,79,79,0.08);}
+.bj-btns{display:flex;gap:8px;width:100%;}
+
+/* Casino stats */
+.casino-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border-soft);border-radius:12px;overflow:hidden;border:1px solid var(--border-soft);margin-top:16px;}
+.casino-stat{background:var(--card);padding:18px 22px;}
+.casino-stat .stat-num{font-size:1.3rem;font-weight:800;letter-spacing:-.02em;color:var(--gold);}
+.casino-stat .stat-label{font-family:'Space Mono';font-size:.58rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-top:3px;}
+
+/* Toast */
+#casino-toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 22px;font-family:'Space Mono';font-size:.75rem;letter-spacing:.06em;z-index:9999;opacity:0;transition:all .35s;pointer-events:none;white-space:nowrap;}
+#casino-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+#casino-toast.win{border-color:var(--gold-border);color:var(--gold);}
+#casino-toast.lose{border-color:rgba(255,79,79,0.3);color:var(--red);}
+#casino-toast.push{border-color:rgba(168,168,255,0.3);color:var(--accent);}
+
+/* Coin flip choice buttons */
+.coin-choice{display:flex;gap:8px;margin-bottom:12px;}
+.btn-choice{flex:1;padding:9px;border-radius:9px;font-family:'Space Mono';font-size:.68rem;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;transition:all .2s;}
+.btn-choice.selected,.btn-choice:hover{border-color:var(--gold-border);color:var(--gold);background:var(--gold-dim);}
+
+@media(max-width:900px){.casino-grid{grid-template-columns:1fr;}}
 @media(max-width:768px){
-  .cards-grid,.stats-row{grid-template-columns:1fr;}
+  .cards-grid,.stats-row,.casino-grid{grid-template-columns:1fr;}
   .hero-title{font-size:3rem;}
   .nav-links,.nav-center{display:none;}
   .hero-actions{flex-direction:column;align-items:flex-start;}
+  .casino-header{flex-direction:column;align-items:flex-start;}
 }
 </style>
 </head>
@@ -130,6 +236,7 @@ footer{position:relative;z-index:2;border-top:1px solid var(--border-soft);paddi
         <button class="dropbtn">Araçlar ▾</button>
         <div class="dropdown-content">
           <a href="#" onclick="openSmsTool();return false;">Mochi SMS Bomber</a>
+          <a href="#casino-section">Mochi Casino</a>
         </div>
       </li>
       <li><a href="#">Dokümantasyon</a></li>
@@ -162,10 +269,10 @@ footer{position:relative;z-index:2;border-top:1px solid var(--border-soft);paddi
       <span class="card-tag">AKTİF</span>
     </div>
     <div class="card">
-      <div class="card-icon">⬡</div>
-      <div class="card-title">API Gateway</div>
-      <div class="card-desc">Harici servislerle entegrasyon noktası. Endpoint yönetimi ve istek izleme (hahagahad ggelmicek bu zencim).</div>
-      <span class="card-tag soon">YAKINDA</span>
+      <div class="card-icon">🎰</div>
+      <div class="card-title">Mochi Casino</div>
+      <div class="card-desc">Sanal ₺ ile oynanan kumarhane. Yazı tura, slot ve blackjack.</div>
+      <span class="card-tag gold">AKTİF</span>
     </div>
     <div class="card">
       <div class="card-icon">◈</div>
@@ -181,6 +288,150 @@ footer{position:relative;z-index:2;border-top:1px solid var(--border-soft);paddi
   </div>
 </div>
 
+<!-- ═══════════════════════════════════ CASINO ═══════════════════════════════════ -->
+<div class="casino-section" id="casino-section">
+  <div class="casino-header">
+    <div class="section-label" style="margin-bottom:0;">Mochi Casino</div>
+    <div class="balance-bar">
+      <div class="balance-chip">
+        <span class="bal-icon">₺</span>
+        <div>
+          <div class="bal-label">Bakiye</div>
+          <div class="bal-amount" id="balance-display">17.500</div>
+        </div>
+      </div>
+      <button class="btn-reset" onclick="resetBalance()">Sıfırla</button>
+    </div>
+  </div>
+
+  <div class="casino-grid">
+
+    <!-- ── YAZI TURA ── -->
+    <div class="game-card">
+      <div class="game-card-header">
+        <div class="game-icon">🪙</div>
+        <div>
+          <div class="game-name">Yazı Tura</div>
+          <div class="game-sub">2× kazanma şansı</div>
+        </div>
+      </div>
+
+      <div class="game-display" id="ct-display">
+        <div>
+          <div class="coin" id="coin">?</div>
+          <div class="game-result" id="ct-result" style="margin-top:10px;">Tahmini seç ve oyna</div>
+        </div>
+      </div>
+
+      <div class="coin-choice">
+        <button class="btn-choice selected" id="ct-yazı" onclick="selectCoin('yazı')">YAZI</button>
+        <button class="btn-choice" id="ct-tura" onclick="selectCoin('tura')">TURA</button>
+      </div>
+
+      <div class="bet-row">
+        <span class="bet-label">Bahis</span>
+        <input class="bet-input" id="ct-bet" type="number" value="500" min="50" step="50">
+      </div>
+      <div class="bet-preset">
+        <button onclick="setBet('ct-bet',250)">250</button>
+        <button onclick="setBet('ct-bet',1000)">1K</button>
+        <button onclick="setBet('ct-bet',5000)">5K</button>
+        <button onclick="setBet('ct-bet',0,true)">MAX</button>
+      </div>
+      <button class="btn-play" id="ct-btn" onclick="playCoinToss()" style="margin-top:12px;">Fırlat →</button>
+    </div>
+
+    <!-- ── SLOT MACHINE ── -->
+    <div class="game-card">
+      <div class="game-card-header">
+        <div class="game-icon">🎰</div>
+        <div>
+          <div class="game-name">Slot Makinesi</div>
+          <div class="game-sub">777 = 10× · Çift = 2×</div>
+        </div>
+      </div>
+
+      <div class="game-display" id="slot-display">
+        <div style="text-align:center;">
+          <div class="slot-machine">
+            <div class="slot-reel" id="reel0"><span class="reel-inner">🍋</span></div>
+            <div class="slot-reel" id="reel1"><span class="reel-inner">🍒</span></div>
+            <div class="slot-reel" id="reel2"><span class="reel-inner">🍀</span></div>
+          </div>
+          <div class="game-result" id="slot-result" style="margin-top:10px;">Çek ve dene şansını</div>
+        </div>
+      </div>
+
+      <div class="bet-row">
+        <span class="bet-label">Bahis</span>
+        <input class="bet-input" id="slot-bet" type="number" value="500" min="50" step="50">
+      </div>
+      <div class="bet-preset">
+        <button onclick="setBet('slot-bet',250)">250</button>
+        <button onclick="setBet('slot-bet',1000)">1K</button>
+        <button onclick="setBet('slot-bet',5000)">5K</button>
+        <button onclick="setBet('slot-bet',0,true)">MAX</button>
+      </div>
+      <button class="btn-play" id="slot-btn" onclick="playSlot()" style="margin-top:12px;">Çek Kolu 🎰</button>
+    </div>
+
+    <!-- ── BLACKJACK ── -->
+    <div class="game-card">
+      <div class="game-card-header">
+        <div class="game-icon">🃏</div>
+        <div>
+          <div class="game-name">Blackjack</div>
+          <div class="game-sub">21'e en yakın kazanır</div>
+        </div>
+      </div>
+
+      <div class="game-display" style="flex-direction:column;gap:10px;min-height:110px;" id="bj-display">
+        <div>
+          <div class="bj-score" id="bj-dealer-label">Krupiyer</div>
+          <div class="bj-area" id="bj-dealer-cards"></div>
+        </div>
+        <div>
+          <div class="bj-score" id="bj-player-label">Sen</div>
+          <div class="bj-area" id="bj-player-cards"></div>
+        </div>
+        <div class="game-result" id="bj-result">Kart dağıt ve başla</div>
+      </div>
+
+      <div class="bet-row">
+        <span class="bet-label">Bahis</span>
+        <input class="bet-input" id="bj-bet" type="number" value="500" min="50" step="50">
+      </div>
+      <div class="bet-preset">
+        <button onclick="setBet('bj-bet',250)">250</button>
+        <button onclick="setBet('bj-bet',1000)">1K</button>
+        <button onclick="setBet('bj-bet',5000)">5K</button>
+        <button onclick="setBet('bj-bet',0,true)">MAX</button>
+      </div>
+      <div style="margin-top:12px;" id="bj-action-area">
+        <button class="btn-play" id="bj-deal-btn" onclick="bjDeal()">Kart Dağıt →</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Casino istatistik barı -->
+  <div class="casino-stats">
+    <div class="casino-stat">
+      <div class="stat-num" id="cs-played">0</div>
+      <div class="stat-label">El Oynandı</div>
+    </div>
+    <div class="casino-stat">
+      <div class="stat-num" id="cs-won">0</div>
+      <div class="stat-label">Kazanılan</div>
+    </div>
+    <div class="casino-stat">
+      <div class="stat-num" id="cs-net" style="color:var(--accent)">+0</div>
+      <div class="stat-label">Net Kâr/Zarar</div>
+    </div>
+  </div>
+</div>
+
+<!-- SMS Modal -->
 <div id="sms-tool-overlay">
   <div class="sms-container">
     <button class="close-btn" onclick="closeSmsTool()" aria-label="Kapat">✕</button>
@@ -204,6 +455,8 @@ footer{position:relative;z-index:2;border-top:1px solid var(--border-soft);paddi
   </div>
 </div>
 
+<div id="casino-toast"></div>
+
 <footer>
   <span>00127 — Mochi Niggaboy &nbsp;·&nbsp; 2026</span>
   <div class="footer-right">
@@ -214,9 +467,12 @@ footer{position:relative;z-index:2;border-top:1px solid var(--border-soft);paddi
 </footer>
 
 <script>
+/* ── Spotlight ── */
 const spot = document.getElementById('spotlight');
 document.addEventListener('mousemove', e => { spot.style.left=e.clientX+'px'; spot.style.top=e.clientY+'px'; spot.style.opacity='1'; });
 document.addEventListener('mouseleave', () => spot.style.opacity='0');
+
+/* ── SMS tool ── */
 function openSmsTool(){ const o=document.getElementById('sms-tool-overlay'); o.style.display='flex'; setTimeout(()=>o.classList.add('active'),10); }
 function closeSmsTool(){ const o=document.getElementById('sms-tool-overlay'); o.classList.remove('active'); setTimeout(()=>o.style.display='none',300); }
 document.getElementById('sms-tool-overlay').addEventListener('click',function(e){ if(e.target===this) closeSmsTool(); });
@@ -232,6 +488,318 @@ function control(action){
     else { btnS.style.display='block'; btnP.style.display='none'; label.innerText='SİSTEM BEKLEMEDE'; label.className=''; dot.className='dot'; }
   }
 }
+
+/* ═══════════════════════════════════════════
+   CASINO ENGINE
+═══════════════════════════════════════════ */
+const STARTING = 17500;
+let balance = STARTING;
+let csPlayed = 0, csWon = 0, csNet = 0;
+
+function fmt(n){ return n.toLocaleString('tr-TR'); }
+
+function updateBalanceUI(){
+  document.getElementById('balance-display').textContent = fmt(balance);
+  document.getElementById('cs-played').textContent = csPlayed;
+  document.getElementById('cs-won').textContent = csWon;
+  const netEl = document.getElementById('cs-net');
+  netEl.textContent = (csNet >= 0 ? '+' : '') + fmt(csNet);
+  netEl.style.color = csNet >= 0 ? 'var(--gold)' : 'var(--red)';
+}
+
+function resetBalance(){
+  balance = STARTING; csPlayed = 0; csWon = 0; csNet = 0;
+  updateBalanceUI();
+  showToast('Bakiye sıfırlandı — ₺' + fmt(STARTING), 'push');
+  // reset game displays
+  document.getElementById('ct-result').textContent = 'Tahmini seç ve oyna';
+  document.getElementById('coin').textContent = '?';
+  document.getElementById('slot-result').textContent = 'Çek ve dene şansını';
+  document.getElementById('bj-result').textContent = 'Kart dağıt ve başla';
+  document.getElementById('bj-dealer-cards').innerHTML = '';
+  document.getElementById('bj-player-cards').innerHTML = '';
+  document.getElementById('bj-dealer-label').textContent = 'Krupiyer';
+  document.getElementById('bj-player-label').textContent = 'Sen';
+  bjGameActive = false;
+  renderBJButtons(false);
+}
+
+function getBet(id){
+  const v = parseInt(document.getElementById(id).value) || 0;
+  return Math.max(50, Math.min(v, balance));
+}
+
+function setBet(id, amount, max=false){
+  if(max) amount = balance;
+  document.getElementById(id).value = Math.min(amount, balance);
+}
+
+function recordResult(won, betAmount){
+  csPlayed++;
+  if(won) csWon++;
+  updateBalanceUI();
+}
+
+/* Toast */
+let toastTimer;
+function showToast(msg, type='win'){
+  const t = document.getElementById('casino-toast');
+  t.textContent = msg;
+  t.className = 'show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>{ t.className=''; }, 2800);
+}
+
+/* ── YAZI TURA ── */
+let ctChoice = 'yazı';
+function selectCoin(c){
+  ctChoice = c;
+  document.getElementById('ct-yazı').classList.toggle('selected', c==='yazı');
+  document.getElementById('ct-tura').classList.toggle('selected', c==='tura');
+}
+
+function playCoinToss(){
+  const bet = getBet('ct-bet');
+  if(bet > balance){ showToast('Yetersiz bakiye!','lose'); return; }
+  if(bet <= 0){ showToast('Geçerli bir bahis gir.','push'); return; }
+
+  const btn = document.getElementById('ct-btn');
+  btn.disabled = true;
+
+  const coin = document.getElementById('coin');
+  const result = document.getElementById('ct-result');
+  coin.textContent = '?';
+  coin.className = 'coin flipping';
+  result.textContent = '...';
+  result.className = 'game-result';
+
+  setTimeout(()=>{
+    const outcomes = ['yazı','tura'];
+    const outcome = outcomes[Math.floor(Math.random()*2)];
+    coin.className = 'coin';
+    coin.textContent = outcome === 'yazı' ? '₺' : '★';
+
+    if(outcome === ctChoice){
+      balance += bet;
+      csNet += bet;
+      result.textContent = outcome.toUpperCase() + ' — KAZANDIN! +₺' + fmt(bet);
+      result.className = 'game-result result-win';
+      showToast('🎉 +₺' + fmt(bet) + ' kazandın!', 'win');
+      recordResult(true, bet);
+    } else {
+      balance -= bet;
+      csNet -= bet;
+      result.textContent = outcome.toUpperCase() + ' — KAYBETTİN. -₺' + fmt(bet);
+      result.className = 'game-result result-lose';
+      showToast('💸 -₺' + fmt(bet) + ' kaybettin.', 'lose');
+      recordResult(false, bet);
+    }
+    btn.disabled = false;
+    updateBalanceUI();
+  }, 900);
+}
+
+/* ── SLOT MACHINE ── */
+const SYMBOLS = ['🍒','🍋','🍊','🍀','⭐','🔔','7️⃣'];
+const WEIGHTS = [30,25,20,10,8,5,2]; // toplam 100
+function weightedSymbol(){
+  let r = Math.random()*100, acc=0;
+  for(let i=0;i<SYMBOLS.length;i++){ acc+=WEIGHTS[i]; if(r<acc) return SYMBOLS[i]; }
+  return SYMBOLS[0];
+}
+
+function playSlot(){
+  const bet = getBet('slot-bet');
+  if(bet > balance){ showToast('Yetersiz bakiye!','lose'); return; }
+  if(bet <= 0){ showToast('Geçerli bir bahis gir.','push'); return; }
+
+  const btn = document.getElementById('slot-btn');
+  btn.disabled = true;
+  const result = document.getElementById('slot-result');
+  result.textContent = '...';
+  result.className = 'game-result';
+
+  const reels = [document.getElementById('reel0'),document.getElementById('reel1'),document.getElementById('reel2')];
+  const finals = [weightedSymbol(),weightedSymbol(),weightedSymbol()];
+
+  reels.forEach((r,i)=>{
+    r.classList.add('spinning');
+    const inner = r.querySelector('.reel-inner');
+    inner.textContent = SYMBOLS[Math.floor(Math.random()*SYMBOLS.length)];
+    setTimeout(()=>{
+      r.classList.remove('spinning');
+      inner.textContent = finals[i];
+    }, 400 + i*200);
+  });
+
+  setTimeout(()=>{
+    const [a,b,c] = finals;
+    let mult = 0;
+    if(a==='7️⃣'&&b==='7️⃣'&&c==='7️⃣'){ mult=10; }
+    else if(a===b&&b===c){ mult=5; }
+    else if(a===b||b===c||a===c){ mult=2; }
+
+    if(mult > 0){
+      const win = bet * mult - bet;
+      balance += win;
+      csNet += win;
+      result.textContent = a+b+c + ` — ${mult}× KAZANÇ! +₺${fmt(win)}`;
+      result.className = 'game-result result-win';
+      showToast((mult===10?'🎰 JACKPOT! ':'🎉 ') + '+₺' + fmt(win) + ' kazandın!', 'win');
+      recordResult(true, bet);
+    } else {
+      balance -= bet;
+      csNet -= bet;
+      result.textContent = a+b+c + ` — Kaybettin. -₺${fmt(bet)}`;
+      result.className = 'game-result result-lose';
+      showToast('💸 -₺' + fmt(bet) + ' kaybettin.', 'lose');
+      recordResult(false, bet);
+    }
+    btn.disabled = false;
+    updateBalanceUI();
+  }, 1100);
+}
+
+/* ── BLACKJACK ── */
+let bjDeck=[], bjPlayer=[], bjDealer=[], bjBet=0, bjGameActive=false;
+
+const SUITS = ['♠','♥','♦','♣'];
+const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+
+function buildDeck(){
+  const d=[];
+  for(const s of SUITS) for(const r of RANKS) d.push({r,s});
+  for(let i=d.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [d[i],d[j]]=[d[j],d[i]]; }
+  return d;
+}
+
+function cardValue(r){ if(['J','Q','K'].includes(r)) return 10; if(r==='A') return 11; return parseInt(r); }
+
+function handTotal(cards){
+  let total = cards.reduce((a,c)=>a+cardValue(c.r),0);
+  let aces = cards.filter(c=>c.r==='A').length;
+  while(total>21&&aces>0){ total-=10; aces--; }
+  return total;
+}
+
+function renderCard(c, hidden=false){
+  const el = document.createElement('div');
+  const isRed = c.s==='♥'||c.s==='♦';
+  el.className = hidden ? 'bj-card hidden' : `bj-card ${isRed?'red':'black'}`;
+  el.textContent = hidden ? '' : c.r+c.s;
+  return el;
+}
+
+function renderBJHand(id, cards, hideSecond=false){
+  const area = document.getElementById(id);
+  area.innerHTML='';
+  cards.forEach((c,i)=>area.appendChild(renderCard(c, hideSecond&&i===1)));
+}
+
+function renderBJButtons(active){
+  const area = document.getElementById('bj-action-area');
+  if(!active){
+    area.innerHTML = `<button class="btn-play" id="bj-deal-btn" onclick="bjDeal()">Kart Dağıt →</button>`;
+  } else {
+    area.innerHTML = `
+      <div class="bj-btns">
+        <button class="btn-play-sm hit" onclick="bjHit()">Kart Al</button>
+        <button class="btn-play-sm stand" onclick="bjStand()">Dur</button>
+      </div>`;
+  }
+}
+
+function bjDeal(){
+  bjBet = getBet('bj-bet');
+  if(bjBet > balance){ showToast('Yetersiz bakiye!','lose'); return; }
+  if(bjBet <= 0){ showToast('Geçerli bir bahis gir.','push'); return; }
+
+  bjDeck = buildDeck();
+  bjPlayer = [bjDeck.pop(), bjDeck.pop()];
+  bjDealer = [bjDeck.pop(), bjDeck.pop()];
+  bjGameActive = true;
+
+  document.getElementById('bj-dealer-label').textContent = `Krupiyer (?)`;
+  document.getElementById('bj-player-label').textContent = `Sen (${handTotal(bjPlayer)})`;
+  document.getElementById('bj-result').textContent = '';
+  document.getElementById('bj-result').className = 'game-result';
+
+  renderBJHand('bj-dealer-cards', bjDealer, true);
+  renderBJHand('bj-player-cards', bjPlayer);
+  renderBJButtons(true);
+
+  if(handTotal(bjPlayer)===21){
+    bjStand(true);
+  }
+}
+
+function bjHit(){
+  if(!bjGameActive) return;
+  bjPlayer.push(bjDeck.pop());
+  const total = handTotal(bjPlayer);
+  document.getElementById('bj-player-label').textContent = `Sen (${total})`;
+  renderBJHand('bj-player-cards', bjPlayer);
+  if(total > 21) bjEnd('bust');
+}
+
+function bjStand(natural=false){
+  if(!bjGameActive) return;
+  bjGameActive=false;
+  // dealer draws
+  while(handTotal(bjDealer)<17) bjDealer.push(bjDeck.pop());
+
+  const pTotal = handTotal(bjPlayer);
+  const dTotal = handTotal(bjDealer);
+
+  document.getElementById('bj-dealer-label').textContent = `Krupiyer (${dTotal})`;
+  renderBJHand('bj-dealer-cards', bjDealer);
+
+  if(pTotal>21){ bjEnd('bust'); return; }
+  if(dTotal>21||pTotal>dTotal){ bjEnd('win', natural); }
+  else if(pTotal===dTotal){ bjEnd('push'); }
+  else { bjEnd('lose'); }
+}
+
+function bjEnd(outcome, natural=false){
+  bjGameActive = false;
+  renderBJButtons(false);
+  const result = document.getElementById('bj-result');
+  let msg='', type='';
+
+  if(outcome==='bust'){
+    balance -= bjBet; csNet -= bjBet;
+    msg = `Battın! (${handTotal(bjPlayer)}) -₺${fmt(bjBet)}`;
+    type='lose'; result.className='game-result result-lose';
+    showToast('💸 Battın! -₺'+fmt(bjBet),'lose');
+    recordResult(false, bjBet);
+  } else if(outcome==='win'){
+    const mult = natural ? 1.5 : 1;
+    const win = Math.floor(bjBet * mult);
+    balance += win; csNet += win;
+    msg = (natural?'BLACKJACK! ':'Kazandın! ') + `+₺${fmt(win)}`;
+    type='win'; result.className='game-result result-win';
+    showToast((natural?'🎉 Blackjack! ':'🎉 Kazandın! ')+'+ ₺'+fmt(win),'win');
+    recordResult(true, bjBet);
+  } else if(outcome==='push'){
+    msg = 'Beraberlik — bahis iade edildi.';
+    type='push'; result.className='game-result result-push';
+    showToast('🤝 Beraberlik, bahis iade.','push');
+    recordResult(false, bjBet);
+  } else {
+    balance -= bjBet; csNet -= bjBet;
+    msg = `Kaybettin. -₺${fmt(bjBet)}`;
+    type='lose'; result.className='game-result result-lose';
+    showToast('💸 Kaybettin. -₺'+fmt(bjBet),'lose');
+    recordResult(false, bjBet);
+  }
+
+  result.textContent = msg;
+  document.getElementById('bj-player-label').textContent = `Sen (${handTotal(bjPlayer)})`;
+  updateBalanceUI();
+}
+
+/* init */
+updateBalanceUI();
 </script>
 </body>
 </html>
