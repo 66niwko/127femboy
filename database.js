@@ -154,7 +154,7 @@ module.exports = {
   casinoGet, casinoUpsert, casinoInit,
   // friends
   friendAdd, friendRemove, friendList, friendCheck,
-  reqSend, reqList, reqDelete, reqExists, acceptFriendTx,
+  reqSend, reqList, reqDelete, reqDeleteById, reqExists, acceptFriendTx,
   // messages
   convKey, msgInsert, msgList,
   unreadGet, unreadSet, unreadClear, unreadSumFor,
