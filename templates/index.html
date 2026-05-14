@@ -749,17 +749,26 @@ let selectedColor = '#a8a8ff';
 let activeChatUid = null;
 let pollInterval = null;
 
-// ── Storage yardımcıları ──
+// ── Storage yardımcıları (localStorage tabanlı) ──
+// shared=true  → 'mochi_shared_' prefix  (tüm "kullanıcılar" — aynı tarayıcıda)
+// shared=false → 'mochi_me_'     prefix  (sadece bu tarayıcı / bu oturum)
+const S_SHARED = 'mochi_shared_';
+const S_MINE   = 'mochi_me_';
+
 async function storageGet(key, shared=true){
-  try{ const r = await window.storage.get(key, shared); return r ? JSON.parse(r.value) : null; }
-  catch(e){ return null; }
+  try{
+    const raw = localStorage.getItem((shared ? S_SHARED : S_MINE) + key);
+    return raw ? JSON.parse(raw) : null;
+  } catch(e){ return null; }
 }
 async function storageSet(key, val, shared=true){
-  try{ await window.storage.set(key, JSON.stringify(val), shared); return true; }
-  catch(e){ return false; }
+  try{
+    localStorage.setItem((shared ? S_SHARED : S_MINE) + key, JSON.stringify(val));
+    return true;
+  } catch(e){ return false; }
 }
 async function storageDel(key, shared=true){
-  try{ await window.storage.delete(key, shared); } catch(e){}
+  try{ localStorage.removeItem((shared ? S_SHARED : S_MINE) + key); } catch(e){}
 }
 
 // ── Yükleme ──
@@ -821,6 +830,8 @@ function applyProfile(){
   // Settings sync
   document.getElementById('settings-bio').value = ME.bio || '';
   syncSettingsPickers();
+  // Casino bakiyesini hesaba göre yükle
+  loadCasino();
 }
 
 // ── Panel aç/kapat ──
@@ -1202,6 +1213,28 @@ let csPlayed = 0, csWon = 0, csNet = 0;
 
 function fmt(n){ return n.toLocaleString('tr-TR'); }
 
+function getCasinoKey(){ return 'mochi_me_casino:' + (ME ? ME.uid : 'guest'); }
+
+function saveCasino(){
+  localStorage.setItem(getCasinoKey(), JSON.stringify({balance, csPlayed, csWon, csNet}));
+}
+
+function loadCasino(){
+  try{
+    const raw = localStorage.getItem(getCasinoKey());
+    if(raw){
+      const d = JSON.parse(raw);
+      balance = d.balance ?? STARTING;
+      csPlayed = d.csPlayed ?? 0;
+      csWon = d.csWon ?? 0;
+      csNet = d.csNet ?? 0;
+    } else {
+      balance = STARTING; csPlayed = 0; csWon = 0; csNet = 0;
+    }
+  } catch(e){ balance = STARTING; csPlayed = 0; csWon = 0; csNet = 0; }
+  updateBalanceUI();
+}
+
 function updateBalanceUI(){
   document.getElementById('balance-display').textContent = fmt(balance);
   document.getElementById('cs-played').textContent = csPlayed;
@@ -1209,10 +1242,12 @@ function updateBalanceUI(){
   const netEl = document.getElementById('cs-net');
   netEl.textContent = (csNet >= 0 ? '+' : '') + fmt(csNet);
   netEl.style.color = csNet >= 0 ? 'var(--gold)' : 'var(--red)';
+  saveCasino();
 }
 
 function resetBalance(){
   balance = STARTING; csPlayed = 0; csWon = 0; csNet = 0;
+  saveCasino();
   updateBalanceUI();
   showToast('Bakiye sıfırlandı — ₺' + fmt(STARTING), 'push');
   // reset game displays
@@ -1241,7 +1276,7 @@ function setBet(id, amount, max=false){
 function recordResult(won, betAmount){
   csPlayed++;
   if(won) csWon++;
-  updateBalanceUI();
+  updateBalanceUI(); // updateBalanceUI already calls saveCasino
 }
 
 /* Toast */
@@ -1503,7 +1538,7 @@ function bjEnd(outcome, natural=false){
 }
 
 /* init */
-updateBalanceUI();
+loadCasino();
 </script>
 </body>
 </html>
