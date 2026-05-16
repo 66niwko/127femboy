@@ -1472,10 +1472,11 @@ async function lookupDiscord(){
   // Public API'ye doğrudan erişemeyiz (CORS), bu yüzden
   // açık proxy: discord.id / discordlookup.com verilerini gösteriyoruz
   // ve resim URL'lerini CDN'den build ediyoruz.
-  const DISCORD_PROXY = `https://discordlookup.mesalytic.com/v1/user/${rawId}`;
+  // Backend proxy — token Render'da environment variable olarak gizli durur
+  const API_BASE = window.location.origin;
 
   try {
-    const res = await fetch(DISCORD_PROXY);
+    const res = await fetch(`${API_BASE}/api/discord/user/${rawId}`);
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
 
