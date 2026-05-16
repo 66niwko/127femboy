@@ -1484,8 +1484,9 @@ async function lookupDiscord(){
     const dateStr = createdAt ? createdAt.toLocaleDateString('tr-TR',{day:'2-digit',month:'long',year:'numeric'}) : '—';
     const timeStr = createdAt ? createdAt.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'}) : '';
 
-    const avatarHash = data.avatar?.id || null;
-    const bannerHash = data.banner?.id || null;
+    // Discord API doğrudan string hash döndürür (nesne değil)
+    const avatarHash = data.avatar || null;
+    const bannerHash = data.banner || null;
     const isAnimatedAvatar = avatarHash && avatarHash.startsWith('a_');
     const isAnimatedBanner = bannerHash && bannerHash.startsWith('a_');
 
@@ -1503,7 +1504,10 @@ async function lookupDiscord(){
     const isBot = data.bot || false;
     if(isBot) badges.unshift({label:'🤖 Bot',cls:'bot'});
 
-    const accentColor = data.banner?.color || null;
+    // accent_color Discord API'de integer olarak gelir, hex'e çevirmek lazım
+    const accentColor = data.accent_color != null
+      ? '#' + data.accent_color.toString(16).padStart(6, '0')
+      : null;
     const bannerBg = accentColor ? accentColor : '#1e2030';
 
     const badgesHtml = badges.map(b=>`<span class="dc-badge-chip ${b.cls}">${b.label}</span>`).join('');
