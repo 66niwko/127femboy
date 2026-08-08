@@ -215,8 +215,8 @@
             <input type="email" id="mail" placeholder="ornek@mail.com">
 
             <div class="btn-row">
-                <button id="saveBtn" onclick="control('start')">Başlat</button>
-                <button id="stopBtn" onclick="control('stop')">Durdur</button>
+                <button id="saveBtn" onclick="control('baslat')">Başlat</button>
+                <button id="stopBtn" onclick="control('durdur')">Durdur</button>
             </div>
             <div class="err" id="err">Geçerli bir numara girin.</div>
 
@@ -488,31 +488,40 @@ window.addEventListener('hashchange', route);
 
 /* ═══ sms tool ═══ */
 function control(action) {
-    const tel = document.getElementById('tel').value.replace(/\D/g, '');
+    const tel = document.getElementById('tel').value;
+    const mail = document.getElementById('mail').value;
     const err = document.getElementById('err');
     const btnS = document.getElementById('saveBtn');
     const btnP = document.getElementById('stopBtn');
     const label = document.getElementById('statusLabel');
     const dot = document.getElementById('dot');
 
-    if (action === 'start' && tel.length < 10) {
+    if (action === 'baslat' && tel.replace(/\D/g, '').length < 10) {
         err.style.display = 'block';
         return;
     }
     err.style.display = 'none';
 
-    if (action === 'start') {
-        btnS.style.display = 'none';
-        btnP.style.display = 'block';
-        label.textContent = 'SİSTEM AKTİF';
-        label.classList.add('active');
-        dot.classList.add('dot-active');
-    } else {
-        btnS.style.display = 'block';
-        btnP.style.display = 'none';
-        label.textContent = 'SİSTEM BEKLEMEDE';
-        label.classList.remove('active');
-        dot.classList.remove('dot-active');
+    fetch('/islem', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({action, tel, mail})
+    }).then(r=>r.json()).then(()=>upd(action)).catch(()=>upd(action));
+
+    function upd(act) {
+        if (act === 'baslat') {
+            btnS.style.display = 'none';
+            btnP.style.display = 'block';
+            label.textContent = 'SİSTEM AKTİF';
+            label.classList.add('active');
+            dot.classList.add('dot-active');
+        } else {
+            btnS.style.display = 'block';
+            btnP.style.display = 'none';
+            label.textContent = 'SİSTEM BEKLEMEDE';
+            label.classList.remove('active');
+            dot.classList.remove('dot-active');
+        }
     }
 }
 </script>
